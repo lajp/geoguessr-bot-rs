@@ -197,7 +197,7 @@ async fn set_time(driver: &WebDriver, time: Option<i64>) -> Result<(), WebDriver
 
 pub async fn create_brc(ctx: &Context) -> Result<String, WebDriverError> {
     let mut data = ctx.data.write().await;
-    let driver = data.get_mut::<WebDriverContainer>().unwrap();
+    let driver = data.get_mut::<WebDriverContainer>().unwrap().lock().await;
     match driver.get("https://www.geoguessr.com/play-with-friends").await {
         Ok(_) => (),
         Err(e) => {
@@ -227,7 +227,7 @@ pub async fn create_brc(ctx: &Context) -> Result<String, WebDriverError> {
 
 pub async fn create_brd(ctx: &Context) -> Result<String, WebDriverError> {
     let mut data = ctx.data.write().await;
-    let driver = data.get_mut::<WebDriverContainer>().unwrap();
+    let driver = data.get_mut::<WebDriverContainer>().unwrap().lock().await;
     match driver.get("https://www.geoguessr.com/play-with-friends").await {
         Ok(_) => (),
         Err(e) => {
@@ -257,7 +257,7 @@ pub async fn create_brd(ctx: &Context) -> Result<String, WebDriverError> {
 
 pub async fn start_brc(ctx: &Context, lobby: &str, rules: &str, powerups: &str) -> Result<(), WebDriverError> {
     let mut data = ctx.data.write().await;
-    let driver = data.get_mut::<WebDriverContainer>().unwrap();
+    let driver = data.get_mut::<WebDriverContainer>().unwrap().lock().await;
     match driver.get(lobby).await {
         Ok(_) => (),
         Err(e) => {
@@ -442,7 +442,7 @@ pub async fn get_map(ctx: &Context, map: &str, rules: &str, time: Option<i64>) -
         mapurl = format!("{}/play", mapurl);
     }
     let mut data = ctx.data.write().await;
-    let driver = data.get_mut::<WebDriverContainer>().unwrap();
+    let driver = data.get_mut::<WebDriverContainer>().unwrap().lock().await;
     match driver.get(mapurl).await {
         Ok(_) => (),
         Err(e) => {
@@ -463,11 +463,11 @@ pub async fn get_map(ctx: &Context, map: &str, rules: &str, time: Option<i64>) -
             no_default.click().await.unwrap();
         }
     };
-    match set_rules(driver, rules).await {
+    match set_rules(&driver, rules).await {
         Ok(_) => (),
         Err(e) => return Err(e),
     };
-    match set_time(driver, time).await {
+    match set_time(&driver, time).await {
         Ok(_) => (),
         Err(e) => return Err(e),
     };
@@ -509,7 +509,7 @@ pub async fn get_map(ctx: &Context, map: &str, rules: &str, time: Option<i64>) -
 
 pub async fn get_cs(ctx: &Context, rules: &str, time: Option<i64>) -> Result<String, WebDriverError> {
     let mut data = ctx.data.write().await;
-    let driver = data.get_mut::<WebDriverContainer>().unwrap();
+    let driver = data.get_mut::<WebDriverContainer>().unwrap().lock().await;
     match driver.get("https://www.geoguessr.com/country-streak").await {
         Ok(_) => (),
         Err(e) => {
@@ -541,11 +541,11 @@ pub async fn get_cs(ctx: &Context, rules: &str, time: Option<i64>) -> Result<Str
         }
     };
 
-    match set_rules(driver, rules).await {
+    match set_rules(&driver, rules).await {
         Ok(_) => (),
         Err(e) => return Err(e),
     };
-    match set_time(driver, time).await {
+    match set_time(&driver, time).await {
         Ok(_) => (),
         Err(e) => return Err(e),
     };

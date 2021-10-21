@@ -35,7 +35,7 @@ impl TypeMapKey for ShardManagerContainer {
 pub struct WebDriverContainer;
 
 impl TypeMapKey for WebDriverContainer {
-    type Value = Arc<GenericWebDriver<ReqwestDriverAsync>>;
+    type Value = Arc<Mutex<GenericWebDriver<ReqwestDriverAsync>>>;
 }
 
 struct Handler;
@@ -104,7 +104,7 @@ async fn main() {
             }
         };
         info!("GeoGuessr login!");
-        data.insert::<WebDriverContainer>(Arc::new(driver));
+        data.insert::<WebDriverContainer>(Arc::new(Mutex::new(driver)));
     }
 
     let shard_manager = client.shard_manager.clone();
