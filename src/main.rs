@@ -1,6 +1,7 @@
-mod selenium;
 mod slash_commands;
 mod commands;
+mod geoguessr_api;
+
 use std::{collections::HashSet, env, sync::Arc};
 
 use serenity::{
@@ -16,12 +17,6 @@ use serenity::{
     prelude::*,
 };
 
-use thirtyfour::GenericWebDriver;
-use thirtyfour::error::WebDriverError;
-use thirtyfour::http::reqwest_async::ReqwestDriverAsync;
-
-use selenium::geoguessr;
-
 use commands::owner::*;
 
 use tracing::{error, info};
@@ -30,12 +25,6 @@ pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<Mutex<ShardManager>>;
-}
-
-pub struct WebDriverContainer;
-
-impl TypeMapKey for WebDriverContainer {
-    type Value = Arc<Mutex<GenericWebDriver<ReqwestDriverAsync>>>;
 }
 
 struct Handler;
@@ -93,21 +82,13 @@ async fn main() {
         .await
         .expect("Err creating client");
 
-
     {
         let mut data = client.data.write().await;
         data.insert::<ShardManagerContainer>(client.shard_manager.clone());
-        let driver = match geoguessr::initialize_geoguessr().await {
-            Ok(d) => d,
-            Err(e) => {
-                panic!("Unable to initialize geoguessr! {}", e);
-            }
-        };
-        info!("GeoGuessr login!");
-        data.insert::<WebDriverContainer>(Arc::new(Mutex::new(driver)));
     }
 
     let shard_manager = client.shard_manager.clone();
+
 
     tokio::spawn(async move {
         tokio::signal::ctrl_c().await.expect("Could not register ctrl+c handler");

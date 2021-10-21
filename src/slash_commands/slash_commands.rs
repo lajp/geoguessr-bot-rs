@@ -2,100 +2,120 @@ use crate::Context;
 use serenity::model::interactions::{Interaction, application_command::*, InteractionResponseType};
 use serde_json::json;
 use tracing::info;
-use crate::geoguessr;
+use crate::geoguessr_api::api_request::*;
 
 pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
+    let response;
     if let Interaction::ApplicationCommand(command) = interaction {
-        let mut response = "ok".to_string();
         let content = match command.data.name.as_str() {
             "geo" => {
                 match command.data.options[0].options[0].name.as_str() {
-                    "normal" => {
-                        let mut map = json!("None");
-                        let mut rules = json!("None");
-                        let mut time = json!("None");
+                    "classic" => {
+                        let mut mapname = json!("None");
+                        let mut moving = json!("false");
+                        let mut panning = json!("false");
+                        let mut zooming = json!("false");
+                        let mut time = 0;
                         for a in &command.data.options[0].options[0].options {
                             match a.name.as_str() {
                                 "map" => {
-                                    map = match a.value.clone() {
+                                    mapname = match a.value.clone() {
                                         Some(v) => v,
                                         None => {
                                             json!("None")
                                         }
                                     }
                                 }
-                                "rules" => {
-                                    rules = match a.value.clone() {
+                                "moving" => {
+                                    moving = match a.value.clone() {
                                         Some(v) => v,
-                                        None => {
-                                            json!("None")
-                                        }
-                                    }
-                                }
+                                        None => json!("false"),
+                                    };
+                                },
+                                "panning" => {
+                                    panning = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("false"),
+                                    };
+                                },
+                                "zooming" => {
+                                    zooming = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("false"),
+                                    };
+                                },
                                 "time" => {
                                     time = match a.value.clone() {
-                                        Some(v) => v,
-                                        None => {
-                                            json!("None")
-                                        }
+                                        Some(v) => v.as_i64().unwrap().try_into().unwrap(),
+                                        None => 0,
                                     }
-                                }
-                                _ => continue
+                                },
+                                _ => (),
                             }
                         }
-                        info!("Calling get_map with following arguments: map={}, rules={}, time={}", map, &rules, &time);
-                        response = format!("Processing request for `Normal` with arguments: `map={}`, `rules={}`, `time={}`", map, rules, time);
-                        let ctx_2 = ctx.clone();
-                        tokio::spawn(async move {
-                            let url = match geoguessr::get_map(&ctx_2, map.as_str().unwrap(), rules.as_str().unwrap(), time.as_i64()).await {
-                                Ok(l) => l,
-                                Err(_) => {
-                                    "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()
-                                },
-                            };
-                            command.channel_id.say(&ctx_2.http, url).await.unwrap();
-                        });
+                        response = get_classic_challenge(mapname.as_str().unwrap(), moving.as_str().unwrap(), panning.as_str().unwrap(), zooming.as_str().unwrap(), time)
+                            .await.unwrap();
                     },
-                    "cs" => {
-                        let mut rules = json!("None");
-                        let mut time = json!("None");
+                    "streaks" => {
+                        let mut moving = json!("false");
+                        let mut panning = json!("false");
+                        let mut zooming = json!("false");
+                        let mut streaktype = json!("CountryStreak");
+                        let mut time = 0;
                         for a in &command.data.options[0].options[0].options {
                             match a.name.as_str() {
-                                "rules" => {
-                                    rules = match a.value.clone() {
+                                "streaktype" => {
+                                    streaktype = match a.value.clone() {
                                         Some(v) => v,
-                                        None => json!("None"),
-                                    }
-                                }
+                                        None => json!("CountryStreak"),
+                                    };
+                                },
+                                "moving" => {
+                                    moving = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("false"),
+                                    };
+                                },
+                                "panning" => {
+                                    panning = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("false"),
+                                    };
+                                },
+                                "zooming" => {
+                                    zooming = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("false"),
+                                    };
+                                },
                                 "time" => {
                                     time = match a.value.clone() {
-                                        Some(v) => v,
-                                        None => json!("None"),
+                                        Some(v) => v.as_i64().unwrap().try_into().unwrap(),
+                                        None => 0,
                                     }
-                                }
-                                _ => continue
+                                },
+                                _ => (),
                             }
                         }
-                        info!("Calling get_cs with following arguments: rules={}, time={}", &rules, &time);
-                        response = format!("Processing request for `Country-Streak` with arguments: `rules={}`, `time={}`", rules, time);
-                        let ctx_2 = ctx.clone();
-                        tokio::spawn(async move {
-                            let url: String = match geoguessr::get_cs(&ctx_2, rules.as_str().unwrap(), time.as_i64()).await {
-                                Ok(l) => l,
-                                Err(_) => {
-                                    "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()
-                                }
-                            };
-                            command.channel_id.say(&ctx_2.http, url).await.unwrap();
-                        });
+                        response = get_streaks_challenge(streaktype.as_str().unwrap(), moving.as_str().unwrap(), panning.as_str().unwrap(), zooming.as_str().unwrap(), time).await.unwrap();
                     },
-                    "brc" => {
+                    "battle-royale" => {
+                        let mut gametype = json!("BattleRoyaleCountries");
                         let mut lobby = json!("None");
-                        let mut rules = json!("None");
-                        let mut powerups = json!("None");
+                        let mut moving = json!("false");
+                        let mut panning = json!("false");
+                        let mut zooming = json!("false");
+                        let mut fiftyfifty = json!("false");
+                        let mut spy = json!("false");
                         let mut create = true;
                         for a in &command.data.options[0].options[0].options {
                             match a.name.as_str() {
+                                "gametype" => {
+                                    gametype = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("BattleRoyaleCountries")
+                                    }
+                                }
                                 "lobby" => {
                                     lobby = match a.value.clone() {
                                         Some(v) => {
@@ -105,95 +125,45 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                                         None => json!("None"),
                                     }
                                 }
-                                "rules" => {
-                                    rules = match a.value.clone() {
+                                "moving" => {
+                                    moving = match a.value.clone() {
                                         Some(v) => v,
-                                        None => {
-                                            json!("None")
-                                        }
-                                    }
-                                }
-                                "powerups" => {
-                                    powerups = match a.value.clone() {
-                                        Some(v) => v,
-                                        None => {
-                                            json!("None")
-                                        }
-                                    }
+                                        None => json!("false"),
+                                    };
                                 },
+                                "panning" => {
+                                    panning = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("false"),
+                                    };
+                                },
+                                "zooming" => {
+                                    zooming = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("false"),
+                                    };
+                                },
+                                "5050" => {
+                                    fiftyfifty = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("false"),
+                                    };
+                                }
+                                "spy" => {
+                                    spy = match a.value.clone() {
+                                        Some(v) => v,
+                                        None => json!("false"),
+                                    };
+                                }
                                 _ => continue
                             }
                         }
                         if create {
-                            info!("Calling create_brc");
-                            response = "Processing request for `Create Battle-Royale Countries`".to_string();
-                            let ctx_2 = ctx.clone();
-                            tokio::spawn(async move {
-                                let url: String = match geoguessr::create_brc(&ctx_2).await {
-                                    Ok(l) => l,
-                                    Err(_) => {
-                                        "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()
-                                    }
-                                };
-                                command.channel_id.say(&ctx_2.http, url).await.unwrap();
-                            });
-                        }
-                        if lobby != json!("None") {
-                            info!("Calling start_brc with following arguments: lobby={}, rules={}, powerups={}", lobby, rules, powerups);
-                            response = "Starting match!".to_string();
-                            let ctx_2 = ctx.clone();
-                            tokio::spawn(async move {
-                                match geoguessr::start_brc(&ctx_2, lobby.as_str().unwrap(), rules.as_str().unwrap(), powerups.as_str().unwrap()).await {
-                                    Ok(_) => (),
-                                    Err(_) => {
-                                        command.channel_id.say(ctx_2.http, "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()).await.unwrap();
-                                    }
-                                };
-                            });
-                        }
-                    },
-                    "brd" => {
-                        let mut lobby = json!("None");
-                        let mut rules = json!("None");
-                        let mut create = true;
-                        for a in &command.data.options[0].options[0].options {
-                            match a.name.as_str() {
-                                "lobby" => {
-                                    lobby = match a.value.clone() {
-                                        Some(v) => {
-                                            create = false;
-                                            v
-                                        },
-                                        None => json!("None"),
-                                    }
-                                }
-                                "rules" => {
-                                    rules = match a.value.clone() {
-                                        Some(v) => v,
-                                        None => {
-                                            json!("None")
-                                        }
-                                    }
-                                },
-                                _ => continue
-                            }
-                        }
-                        if create {
-                            info!("Calling create_brd");
-                            response = "Processing request for `Create Battle-Royale Distance`".to_string();
-                            let ctx_2 = ctx.clone();
-                            tokio::spawn(async move {
-                                let url: String = match geoguessr::create_brd(&ctx_2).await {
-                                    Ok(l) => l,
-                                    Err(_) => {
-                                        "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()
-                                    }
-                                };
-                                command.channel_id.say(&ctx_2.http, url).await.unwrap();
-                            });
-                        }
-                        if lobby != json!("None") {
-                            info!("Calling start_brd with following arguments: lobby={}, rules={}", lobby, rules);
+                            response = get_battleroyale_lobby().await.unwrap();
+                        } else {
+                            start_battleroyale(gametype.as_str().unwrap(), lobby.as_str().unwrap(), moving.as_str().unwrap(), panning.as_str().unwrap(),
+                                zooming.as_str().unwrap(), fiftyfifty.as_str().unwrap(), spy.as_str().unwrap()).await;
+                            response = "Starting game...".to_string()
                         }
                     },
                     _ => {
@@ -229,7 +199,7 @@ pub async fn create_slash_commands(ctx: &Context) {
                             .description("The challenge's gamemode")
                             .kind(ApplicationCommandOptionType::SubCommandGroup)
                             .create_sub_option(|subopt| {
-                                subopt.name("normal")
+                                subopt.name("classic")
                                     .description("The default gamemode")
                                     .kind(ApplicationCommandOptionType::SubCommand)
                                     .create_sub_option(|subopt1| {
@@ -239,27 +209,44 @@ pub async fn create_slash_commands(ctx: &Context) {
                                             .kind(ApplicationCommandOptionType::String)
                                     })
                                 .create_sub_option(|subopt2| {
-                                    subopt2.name("rules")
+                                    subopt2.name("moving")
                                         .description("The challenge's ruleset")
-                                        .required(true)
                                         .kind(ApplicationCommandOptionType::String)
-                                        .add_string_choice("Everything is allowed", "default")
-                                        .add_string_choice("No moving", "nm")
-                                        .add_string_choice("No zooming", "nz")
-                                        .add_string_choice("No moving or zooming", "nmz")
-                                        .add_string_choice("No moving, panning or zooming", "nmpz")
+                                        .add_string_choice("Moving is allowed", "false")
+                                        .add_string_choice("Moving is not allowed", "true")
+                                })
+                                .create_sub_option(|subopt2| {
+                                    subopt2.name("panning")
+                                        .description("The challenge's ruleset")
+                                        .kind(ApplicationCommandOptionType::String)
+                                        .add_string_choice("Panning is allowed", "false")
+                                        .add_string_choice("Panning is not allowed", "true")
+                                })
+                                .create_sub_option(|subopt2| {
+                                    subopt2.name("zooming")
+                                        .description("The challenge's ruleset")
+                                        .kind(ApplicationCommandOptionType::String)
+                                        .add_string_choice("Zooming is allowed", "false")
+                                        .add_string_choice("Zooming is not allowed", "true")
                                 })
                                 .create_sub_option(|subopt3| {
                                     subopt3.name("time")
                                         .description("The challenge's per-round time limit")
-                                        .required(false)
                                         .kind(ApplicationCommandOptionType::Integer)
                                 })
                             })
                         .create_sub_option(|subopt| {
-                            subopt.name("brc")
-                                .description("Battle-Royale Counries")
+                            subopt.name("battle-royale")
+                                .description("Battle Royale")
                                 .kind(ApplicationCommandOptionType::SubCommand)
+                                .create_sub_option(|subopt1| {
+                                    subopt1.name("gametype")
+                                        .description("Type of the game")
+                                        .required(false)
+                                        .kind(ApplicationCommandOptionType::String)
+                                        .add_string_choice("Battle-Royale Countries", "BattleRoyaleCountries")
+                                        .add_string_choice("Battle-Royale Distance", "BattleRoyaleDistance")
+                                })
                                 .create_sub_option(|subopt1| {
                                     subopt1.name("lobby")
                                         .description("Link to lobby")
@@ -267,63 +254,72 @@ pub async fn create_slash_commands(ctx: &Context) {
                                         .kind(ApplicationCommandOptionType::String)
                                 })
                                 .create_sub_option(|subopt2| {
-                                    subopt2.name("rules")
-                                        .description("The games' ruleset")
-                                        .required(false)
+                                    subopt2.name("moving")
+                                        .description("The challenge's ruleset")
                                         .kind(ApplicationCommandOptionType::String)
-                                        .add_string_choice("Everything is allowed", "default")
-                                        .add_string_choice("No moving", "nm")
-                                        .add_string_choice("No zooming", "nz")
-                                        .add_string_choice("No moving or zooming", "nmz")
-                                        .add_string_choice("No moving, panning or zooming", "nmpz")
+                                        .add_string_choice("Moving is allowed", "false")
+                                        .add_string_choice("Moving is not allowed", "true")
+                                })
+                                .create_sub_option(|subopt2| {
+                                    subopt2.name("panning")
+                                        .description("The challenge's ruleset")
+                                        .kind(ApplicationCommandOptionType::String)
+                                        .add_string_choice("Panning is allowed", "false")
+                                        .add_string_choice("Panning is not allowed", "true")
+                                })
+                                .create_sub_option(|subopt2| {
+                                    subopt2.name("zooming")
+                                        .description("The challenge's ruleset")
+                                        .kind(ApplicationCommandOptionType::String)
+                                        .add_string_choice("Zooming is allowed", "false")
+                                        .add_string_choice("Zooming is not allowed", "true")
                                 })
                                 .create_sub_option(|subopt3| {
-                                    subopt3.name("powerups")
-                                        .description("Powerups available in the game")
-                                        .required(false)
+                                    subopt3.name("5050")
+                                        .description("The 5050 powerup")
                                         .kind(ApplicationCommandOptionType::String)
-                                        .add_string_choice("Both 5050 and spy are available", "All")
-                                        .add_string_choice("No powerups are available", "None")
-                                        .add_string_choice("The 5050-powerup is available", "5050")
-                                        .add_string_choice("The Spy-powerup is available", "Spy")
+                                        .add_string_choice("The 5050-powerup is available", "true")
+                                        .add_string_choice("The 5050-powerup is not available", "false")
+                                })
+                                .create_sub_option(|subopt3| {
+                                    subopt3.name("spy")
+                                        .description("The Spy powerup")
+                                        .kind(ApplicationCommandOptionType::String)
+                                        .add_string_choice("The Spy-powerup is available", "true")
+                                        .add_string_choice("The Spy-powerup is not available", "false")
                                 })
                         })
                         .create_sub_option(|subopt| {
-                            subopt.name("brd")
-                                .description("Battle-Royale Distance")
-                                .kind(ApplicationCommandOptionType::SubCommand)
-                                .create_sub_option(|subopt1| {
-                                    subopt1.name("lobby")
-                                        .description("Link to lobby")
-                                        .required(false)
-                                        .kind(ApplicationCommandOptionType::String)
-                                })
-                            .create_sub_option(|subopt2| {
-                                subopt2.name("rules")
-                                    .description("The games' ruleset")
-                                    .required(false)
-                                    .kind(ApplicationCommandOptionType::String)
-                                    .add_string_choice("Everything is allowed", "default")
-                                    .add_string_choice("No moving", "nm")
-                                    .add_string_choice("No zooming", "nz")
-                                    .add_string_choice("No moving or zooming", "nmz")
-                                    .add_string_choice("No moving, panning or zooming", "nmpz")
-                            })
-                        })
-                        .create_sub_option(|subopt| {
-                            subopt.name("cs")
-                                .description("Country-Streak")
+                            subopt.name("streaks")
+                                .description("Streaks-gamemode")
                                 .kind(ApplicationCommandOptionType::SubCommand)
                                 .create_sub_option(|subopt2| {
-                                    subopt2.name("rules")
-                                        .description("The challenge's ruleset")
-                                        .required(true)
+                                    subopt2.name("streaktype")
+                                        .description("The streaktype")
                                         .kind(ApplicationCommandOptionType::String)
-                                        .add_string_choice("Everything is allowed", "default")
-                                        .add_string_choice("No moving", "nm")
-                                        .add_string_choice("No zooming", "nz")
-                                        .add_string_choice("No moving or zooming", "nmz")
-                                        .add_string_choice("No moving, panning or zooming", "nmpz")
+                                        .add_string_choice("Country-Streak", "CountryStreak")
+                                        .add_string_choice("US state streak", "UsStateStreak")
+                                })
+                                .create_sub_option(|subopt2| {
+                                    subopt2.name("moving")
+                                        .description("The challenge's ruleset")
+                                        .kind(ApplicationCommandOptionType::String)
+                                        .add_string_choice("Moving is allowed", "false")
+                                        .add_string_choice("Moving is not allowed", "true")
+                                })
+                                .create_sub_option(|subopt2| {
+                                    subopt2.name("panning")
+                                        .description("The challenge's ruleset")
+                                        .kind(ApplicationCommandOptionType::String)
+                                        .add_string_choice("Panning is allowed", "false")
+                                        .add_string_choice("Panning is not allowed", "true")
+                                })
+                                .create_sub_option(|subopt2| {
+                                    subopt2.name("zooming")
+                                        .description("The challenge's ruleset")
+                                        .kind(ApplicationCommandOptionType::String)
+                                        .add_string_choice("Zooming is allowed", "false")
+                                        .add_string_choice("Zooming is not allowed", "true")
                                 })
                             .create_sub_option(|subopt3| {
                                 subopt3.name("time")
