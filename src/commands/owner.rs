@@ -3,12 +3,11 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use crate::ShardManagerContainer;
-use crate::WebDriverContainer;
 
 #[command]
 #[owners_only]
 pub async fn quit(ctx: &Context, msg: &Message) -> CommandResult {
-    let mut data = ctx.data.write().await;
+    let data = ctx.data.write().await;
     //let driver = data.get_mut::<WebDriverContainer>().unwrap();
     //driver.quit().await;
 

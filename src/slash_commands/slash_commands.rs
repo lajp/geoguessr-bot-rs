@@ -20,7 +20,6 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                                     map = match a.value.clone() {
                                         Some(v) => v,
                                         None => {
-                                            response = format!("Unable to process request! Empty value on {} was given", a.name).clone();
                                             json!("None")
                                         }
                                     }
@@ -29,7 +28,6 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                                     rules = match a.value.clone() {
                                         Some(v) => v,
                                         None => {
-                                            response = format!("Unable to process request! Empty value on {} was given", a.name).clone();
                                             json!("None")
                                         }
                                     }
@@ -49,7 +47,12 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                         response = format!("Processing request for `Normal` with arguments: `map={}`, `rules={}`, `time={}`", map, rules, time);
                         let ctx_2 = ctx.clone();
                         tokio::spawn(async move {
-                            let url = geoguessr::get_map(&ctx_2, map.as_str().unwrap(), rules.as_str().unwrap(), time.as_i64()).await;
+                            let url = match geoguessr::get_map(&ctx_2, map.as_str().unwrap(), rules.as_str().unwrap(), time.as_i64()).await {
+                                Ok(l) => l,
+                                Err(_) => {
+                                    "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()
+                                },
+                            };
                             command.channel_id.say(&ctx_2.http, url).await.unwrap();
                         });
                     },
@@ -77,7 +80,12 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                         response = format!("Processing request for `Country-Streak` with arguments: `rules={}`, `time={}`", rules, time);
                         let ctx_2 = ctx.clone();
                         tokio::spawn(async move {
-                            let url = geoguessr::get_cs(&ctx_2, rules.as_str().unwrap(), time.as_i64()).await;
+                            let url: String = match geoguessr::get_cs(&ctx_2, rules.as_str().unwrap(), time.as_i64()).await {
+                                Ok(l) => l,
+                                Err(_) => {
+                                    "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()
+                                }
+                            };
                             command.channel_id.say(&ctx_2.http, url).await.unwrap();
                         });
                     },
@@ -121,7 +129,12 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                             response = "Processing request for `Create Battle-Royale Countries`".to_string();
                             let ctx_2 = ctx.clone();
                             tokio::spawn(async move {
-                                let url = geoguessr::create_brc(&ctx_2).await;
+                                let url: String = match geoguessr::create_brc(&ctx_2).await {
+                                    Ok(l) => l,
+                                    Err(_) => {
+                                        "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()
+                                    }
+                                };
                                 command.channel_id.say(&ctx_2.http, url).await.unwrap();
                             });
                         }
@@ -130,7 +143,12 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                             response = "Starting match!".to_string();
                             let ctx_2 = ctx.clone();
                             tokio::spawn(async move {
-                                geoguessr::start_brc(&ctx_2, lobby.as_str().unwrap(), rules.as_str().unwrap(), powerups.as_str().unwrap()).await;
+                                match geoguessr::start_brc(&ctx_2, lobby.as_str().unwrap(), rules.as_str().unwrap(), powerups.as_str().unwrap()).await {
+                                    Ok(_) => (),
+                                    Err(_) => {
+                                        command.channel_id.say(ctx_2.http, "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()).await.unwrap();
+                                    }
+                                };
                             });
                         }
                     },
@@ -165,7 +183,12 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                             response = "Processing request for `Create Battle-Royale Distance`".to_string();
                             let ctx_2 = ctx.clone();
                             tokio::spawn(async move {
-                                let url = geoguessr::create_brd(&ctx_2).await;
+                                let url: String = match geoguessr::create_brd(&ctx_2).await {
+                                    Ok(l) => l,
+                                    Err(_) => {
+                                        "There was an error while processing your request! If this problem persists please contact the maintainer of the bot".to_string()
+                                    }
+                                };
                                 command.channel_id.say(&ctx_2.http, url).await.unwrap();
                             });
                         }
@@ -197,7 +220,7 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
 }
 
 pub async fn create_slash_commands(ctx: &Context) {
-    let commands = ApplicationCommand::set_global_application_commands(&ctx.http, |commands| {
+    ApplicationCommand::set_global_application_commands(&ctx.http, |commands| {
         commands
             .create_application_command(|command| {
                 command.name("geo").description("Get GeoGuessr challenge link")

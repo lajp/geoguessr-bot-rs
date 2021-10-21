@@ -17,6 +17,7 @@ use serenity::{
 };
 
 use thirtyfour::GenericWebDriver;
+use thirtyfour::error::WebDriverError;
 use thirtyfour::http::reqwest_async::ReqwestDriverAsync;
 
 use selenium::geoguessr;
@@ -96,7 +97,12 @@ async fn main() {
     {
         let mut data = client.data.write().await;
         data.insert::<ShardManagerContainer>(client.shard_manager.clone());
-        let driver = geoguessr::initialize_geoguessr().await;
+        let driver = match geoguessr::initialize_geoguessr().await {
+            Ok(d) => d,
+            Err(e) => {
+                panic!("Unable to initialize geoguessr! {}", e);
+            }
+        };
         info!("GeoGuessr login!");
         data.insert::<WebDriverContainer>(Arc::new(driver));
     }
