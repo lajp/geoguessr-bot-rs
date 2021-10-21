@@ -33,6 +33,9 @@ pub async fn initialize_geoguessr() -> WebDriver {
 
 async fn set_rules(driver: &WebDriver, rules: &str) {
     match rules {
+        "default" => {
+            driver.query(By::ClassName("radio-button")).first().await.unwrap().click().await.unwrap();
+        },
         "nm" => {
             driver.query(By::ClassName("radio-button")).all().await.unwrap()[1].click().await.unwrap();
         },
@@ -50,16 +53,18 @@ async fn set_rules(driver: &WebDriver, rules: &str) {
 }
 
 async fn set_time(driver: &WebDriver, time: Option<i64>) {
-    if let Some(mut t) = time {
-        let slider = driver.find_element(By::ClassName("rangeslider")).await.unwrap();
-        if t > 600 {
-            t = 600;
-        }
-        let amount: i32 = (t/10).try_into().unwrap();
-        let width = slider.rect().await.unwrap().width;
-        slider.click().await.unwrap();
-        driver.action_chain().move_to_element_with_offset(&slider, ((-width/2.0) as i32)+12+(amount*5), 0).click().perform().await.unwrap();
+    let mut t = match time {
+        Some(t) => t,
+        None => 0,
+    };
+    let slider = driver.find_element(By::ClassName("rangeslider")).await.unwrap();
+    if t > 600 {
+        t = 600;
     }
+    let amount: i32 = (t/10).try_into().unwrap();
+    let width = slider.rect().await.unwrap().width;
+    slider.click().await.unwrap();
+    driver.action_chain().move_to_element_with_offset(&slider, ((-width/2.0) as i32)+12+(amount*5), 0).click().perform().await.unwrap();
 }
 
 pub async fn create_brc(ctx: &Context) -> String {
