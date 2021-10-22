@@ -21,6 +21,5 @@ tracing = "*"
 tracing-subscriber = "*"
 futures = "*"
 serde_json = "*"
-thirtyfour = "*"
 reqwest = { version = "*", features = ["cookies", "json"] }
 serde = "*"
