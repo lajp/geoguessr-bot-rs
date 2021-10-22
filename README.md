@@ -7,24 +7,15 @@ This is a simple implementation of a discord bot that send GeoGuessr-challenge l
 
 ## Requirements:
 * 1 GeoGuessr pro account
-* A browser
-* A webdriver for your browser
 
 ## Usage:
-Setup the webdriver.
-
-For firefox users do:
-```sh
-geckodriver --port 4444
-```
 
 ### An example of the .env file
 ```env
 DISCORD_TOKEN=YourBotsToken
 APPLICATION_ID=YourBotsAppId
 
-GEOGUESSR_EMAIL=your.account@example.com
-GEOGUESSR_PASSWORD=SuperSecurePassword
+GEOGUESSR_AUTH_TOKEN=YourLoginCookies
 
 RUST_LOG=info
 ```
