@@ -72,6 +72,7 @@ These subcommands have their own suboptions that are specified as follows:
 * Optional, defaults to `0` (No time limit)
 * Specifies the per-round time limit for the generated challenge in seconds
 * Has to be an integer between `0` and `(2^31)-1`
+
 I don't know if the GeoGuessr-API actually imposes any limitations for the
 time-limit, but in my code the value for it is stored in an `i32` and therefore it can't be greated than `2147483647` ~ 24855 days
 
@@ -80,6 +81,7 @@ time-limit, but in my code the value for it is stored in an `i32` and therefore 
 ##### `map`:
 * Required
 * Specifies the name of the map for the generated challenge.
+
 Internally the bot queries the GeoGuessr-API and chooses the 1st result. The results are the same that show up
 while using the search function on the GeoGuessr website.
 
@@ -100,6 +102,7 @@ while using the search function on the GeoGuessr website.
 ##### `lobby`:
 * Optional
 * Specifies the url to the the `lobby` that's game should be started.
+
 If no `lobby` is specified all the other options will be ignored and a lobby will be created.
 The url for the created lobby will then be returned as an answer to the slash-command.
 
