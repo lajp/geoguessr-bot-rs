@@ -130,6 +130,12 @@ pub async fn start_battleroyale(gametype: &str, lobby: &str, moving: &str, panni
         .send()
         .await.unwrap();
 
+    client.post(format!("https://game-server.geoguessr.com/api/lobby/{}/join", lobbyid))
+        .header(reqwest::header::COOKIE, cookie.clone())
+        .json(&json!(null))
+        .send()
+        .await.unwrap();
+
     client.post(format!("https://game-server.geoguessr.com/api/lobby/{}/start", lobbyid))
         .header(reqwest::header::COOKIE, cookie)
         .json(&json!(null))
