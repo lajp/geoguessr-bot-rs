@@ -40,7 +40,7 @@ pub async fn get_streaks_challenge(streaktype: &str, moving: &str, panning: &str
 async fn search_for_map(mapname: &str, cookie: &str) -> Result<String, ()> {
     let mapname = mapname.replace(" ", "+");
     let client = reqwest::Client::new();
-    let res = client.get(format!("https://www.geoguessr.com/api/v3/search/any?page=0&count=1&q={}", mapname))
+    let res = client.get(format!("https://www.geoguessr.com/api/v3/search/map?page=0&count=1&q={}", mapname))
         .header(reqwest::header::COOKIE, cookie)
         .send()
         .await
