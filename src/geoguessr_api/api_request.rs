@@ -6,6 +6,7 @@ use serde_json::json;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
+use tracing::info;
 #[derive(Deserialize)]
 struct Res {
     token: String,
@@ -39,6 +40,7 @@ pub async fn get_streaks_challenge(streaktype: &str, moving: &str, panning: &str
 
 async fn search_for_map(mapname: &str, cookie: &str) -> Result<String, ()> {
     let mapname = mapname.replace(" ", "+");
+    info!("Querying for map: {}", mapname);
     let client = reqwest::Client::new();
     let res = client.get(format!("https://www.geoguessr.com/api/v3/search/map?page=0&count=1&q={}", mapname))
         .header(reqwest::header::COOKIE, cookie)
@@ -50,6 +52,10 @@ async fn search_for_map(mapname: &str, cookie: &str) -> Result<String, ()> {
         .unwrap();
 
     let v: Value =serde_json::from_str(&res).unwrap();
+    if v.as_array().unwrap().is_empty() {
+        info!("No map found!");
+        return Err(())
+    }
     Ok(v[0]["id"].to_string().replace('"', ""))
 }
 
@@ -58,7 +64,10 @@ pub async fn get_classic_challenge(mapname: &str, moving: &str, panning: &str, z
     let cookie = env::var("GEOGUESSR_AUTH_TOKEN").expect("Expected geoguessr cookie");
     let timestr = time.to_string();
 
-    let mapid = search_for_map(mapname, &cookie).await.unwrap();
+    let mapid = match search_for_map(mapname, &cookie).await {
+        Ok(m) => m,
+        Err(_) => return Err(())
+    };
 
     let mut map = HashMap::new();
     map.insert("forbidMoving", moving);

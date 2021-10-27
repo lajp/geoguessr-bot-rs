@@ -53,8 +53,11 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                                 _ => (),
                             }
                         }
-                        response = get_classic_challenge(mapname.as_str().unwrap(), moving.as_str().unwrap(), panning.as_str().unwrap(), zooming.as_str().unwrap(), time)
-                            .await.unwrap();
+                        response = match get_classic_challenge(mapname.as_str().unwrap(), moving.as_str().unwrap(), panning.as_str().unwrap(), zooming.as_str().unwrap(), time)
+                            .await {
+                                Ok(c) => c,
+                                Err(_) => "No map found matching the query!".to_string()
+                            }
                     },
                     "streaks" => {
                         let mut moving = json!("false");
