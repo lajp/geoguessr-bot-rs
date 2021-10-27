@@ -71,10 +71,7 @@ These subcommands have their own suboptions that are specified as follows:
 ##### `time`:
 * Optional, defaults to `0` (No time limit)
 * Specifies the per-round time limit for the generated challenge in seconds
-* Has to be an integer between `0` and `(2^31)-1`
-
-I don't know if the GeoGuessr-API actually imposes any limitations for the
-time-limit, but in my code the value for it is stored in an `i32` and therefore it can't be greated than `2147483647` ~ 24855 days
+* Has to be an integer between `0` and `(2^31)-1` (the maximum value `2147483647` being roughly equivelant to 24855 days)
 
 #### `/geo mode classic`
 
