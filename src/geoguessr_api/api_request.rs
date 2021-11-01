@@ -42,21 +42,42 @@ async fn search_for_map(mapname: &str, cookie: &str) -> Result<String, ()> {
     let mapname = mapname.replace(" ", "+");
     info!("Querying for map: {}", mapname);
     let client = reqwest::Client::new();
-    let res = client.get(format!("https://www.geoguessr.com/api/v3/search/map?page=0&count=1&q={}", mapname))
-        .header(reqwest::header::COOKIE, cookie)
-        .send()
-        .await
-        .unwrap()
-        .text()
-        .await
-        .unwrap();
+    let res;
+    if mapname != "random" {
+        res = client.get(format!("https://www.geoguessr.com/api/v3/search/map?page=0&count=1&q={}", mapname))
+            .header(reqwest::header::COOKIE, cookie)
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+    }
+    else {
+        res = client.get("https://www.geoguessr.com/api/v3/social/maps/browse/random?count=1")
+            .header(reqwest::header::COOKIE, cookie)
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+    }
 
     let v: Value =serde_json::from_str(&res).unwrap();
-    if v.as_array().unwrap().is_empty() {
-        info!("No map found!");
-        return Err(())
+    let id;
+    if let Some(varray) = v.as_array() {
+        if varray.is_empty() {
+            info!("No map found!");
+            return Err(());
+        }
+        id = varray[0]["id"].to_string().replace('"', "");
     }
-    Ok(v[0]["id"].to_string().replace('"', ""))
+    else {
+        id = v.as_object().unwrap()["id"].to_string().replace('"', "");
+    }
+    println!("{:?}", id);
+    Ok(id)
 }
 
 pub async fn get_classic_challenge(mapname: &str, moving: &str, panning: &str, zooming: &str, time: i32) -> Result<String, ()> {
