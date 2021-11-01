@@ -64,7 +64,7 @@ async fn search_for_map(mapname: &str, cookie: &str) -> Result<String, ()> {
             .unwrap();
     }
 
-    let v: Value =serde_json::from_str(&res).unwrap();
+    let v: Value = serde_json::from_str(&res).unwrap();
     let id;
     if let Some(varray) = v.as_array() {
         if varray.is_empty() {
@@ -76,7 +76,6 @@ async fn search_for_map(mapname: &str, cookie: &str) -> Result<String, ()> {
     else {
         id = v.as_object().unwrap()["id"].to_string().replace('"', "");
     }
-    println!("{:?}", id);
     Ok(id)
 }
 
