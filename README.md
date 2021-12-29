@@ -2,6 +2,9 @@
 
 This is a simple implementation of a discord bot that send GeoGuessr-challenge links on demand.
 
+## IMPORTANT NOTICE FOR USERS
+**IF YOU ARE PLANNING TO HOST THIS BOT, PLEASE DO KEEP IN MIND THAT IT AGAINST GEOGUESSR'S TERMS OF SERVICE TO HOST A PUBLIC INSTANCE OF THIS BOT AND HOSTING ONE WILL MOST LIKELY GET YOUR GEOGUESSR ACCOUNT DISABLED**
+
 ## Features:
 * Slash-commands
 * Lightning-fast response times
