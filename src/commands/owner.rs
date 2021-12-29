@@ -21,4 +21,3 @@ pub async fn quit(ctx: &Context, msg: &Message) -> CommandResult {
 
     Ok(())
 }
-

@@ -1,6 +1,6 @@
-mod slash_commands;
 mod commands;
 mod geoguessr_api;
+mod slash_commands;
 
 use std::{collections::HashSet, env, sync::Arc};
 
@@ -9,11 +9,7 @@ use serenity::{
     client::bridge::gateway::ShardManager,
     framework::{standard::macros::group, StandardFramework},
     http::Http,
-    model::{
-        event::ResumedEvent,
-        gateway::Ready,
-        prelude::Interaction,
-    },
+    model::{event::ResumedEvent, gateway::Ready, prelude::Interaction},
     prelude::*,
 };
 
@@ -67,13 +63,13 @@ async fn main() {
             owners.insert(info.owner.id);
 
             (owners, info.id)
-        },
+        }
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
-    let framework =
-        StandardFramework::new().configure(|c| c.owners(owners).prefix("!")).group(&GENERAL_GROUP);
-
+    let framework = StandardFramework::new()
+        .configure(|c| c.owners(owners).prefix("!"))
+        .group(&GENERAL_GROUP);
 
     let mut client = Client::builder(&token)
         .application_id(application_id)
@@ -89,14 +85,14 @@ async fn main() {
 
     let shard_manager = client.shard_manager.clone();
 
-
     tokio::spawn(async move {
-        tokio::signal::ctrl_c().await.expect("Could not register ctrl+c handler");
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Could not register ctrl+c handler");
         shard_manager.lock().await.shutdown_all().await;
     });
 
     if let Err(why) = client.start().await {
         error!("Client error: {:?}", why);
     }
-
 }
