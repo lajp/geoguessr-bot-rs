@@ -154,19 +154,19 @@ pub async fn start_battleroyale(gametype: &str, lobby: &str, moving: &str, panni
 
     let client = reqwest::Client::new();
     client.put(format!("https://game-server.geoguessr.com/api/lobby/{}/options", lobbyid))
-        .header(reqwest::header::COOKIE, cookie.clone())
+        .header(reqwest::header::COOKIE, &cookie)
         .json(&map)
         .send()
         .await.unwrap();
 
     client.post(format!("https://game-server.geoguessr.com/api/lobby/{}/join", lobbyid))
-        .header(reqwest::header::COOKIE, cookie.clone())
+        .header(reqwest::header::COOKIE, &cookie)
         .json(&json!(null))
         .send()
         .await.unwrap();
 
     client.post(format!("https://game-server.geoguessr.com/api/lobby/{}/start", lobbyid))
-        .header(reqwest::header::COOKIE, cookie)
+        .header(reqwest::header::COOKIE, &cookie)
         .json(&json!(null))
         .send()
         .await.unwrap();
