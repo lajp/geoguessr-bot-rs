@@ -55,9 +55,9 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                         }
                         response = match get_classic_challenge(
                             mapname.as_str().unwrap(),
-                            moving.as_str().unwrap(),
-                            panning.as_str().unwrap(),
-                            zooming.as_str().unwrap(),
+                            moving.as_str().unwrap() == "true",
+                            panning.as_str().unwrap() == "true",
+                            zooming.as_str().unwrap() == "true",
                             time,
                         )
                         .await
@@ -109,9 +109,9 @@ pub async fn handle_interaction(ctx: Context, interaction: Interaction) {
                         }
                         response = get_streaks_challenge(
                             streaktype.as_str().unwrap(),
-                            moving.as_str().unwrap(),
-                            panning.as_str().unwrap(),
-                            zooming.as_str().unwrap(),
+                            moving.as_str().unwrap() == "true",
+                            panning.as_str().unwrap() == "true",
+                            zooming.as_str().unwrap() == "true",
                             time,
                         )
                         .await

@@ -13,32 +13,26 @@ struct Res {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct CreateBr {
-    gameLobbyId: String,
+    game_lobby_id: String,
 }
 
 pub async fn get_streaks_challenge(
     streaktype: &str,
-    moving: &str,
-    panning: &str,
-    zooming: &str,
+    moving: bool,
+    panning: bool,
+    zooming: bool,
     time: i32,
 ) -> Result<String, anyhow::Error> {
     dotenv::dotenv().expect("Failed to load .env file");
     let cookie = env::var("GEOGUESSR_AUTH_TOKEN").expect("Expected geoguessr cookies");
-    let timestr = time.to_string();
-
-    let mut map = HashMap::new();
-    map.insert("forbidMoving", moving);
-    map.insert("forbidRotating", panning);
-    map.insert("forbidZooming", zooming);
-    map.insert("streakType", streaktype);
-    map.insert("timeLimit", &timestr);
+    let req = json!({ "forbidMoving": moving, "forbidRotating": panning, "forbidZooming": zooming, "streakType": streaktype, "timeLimit": time});
     let client = reqwest::Client::new();
     let res = client
         .post("https://www.geoguessr.com/api/v3/challenges/streak")
         .header(reqwest::header::COOKIE, cookie)
-        .json(&map)
+        .json(&req)
         .send()
         .await?;
 
@@ -79,36 +73,32 @@ async fn search_for_map(mapname: &str, cookie: &str) -> Result<String, anyhow::E
         }
         varray[0]["id"].to_string().replace('"', "")
     } else {
-        v.as_object().ok_or(anyhow::anyhow!("Unknown API error"))?["id"].to_string().replace('"', "")
+        v.as_object().ok_or(anyhow::anyhow!("Unknown API error"))?["id"]
+            .to_string()
+            .replace('"', "")
     };
     Ok(id)
 }
 
 pub async fn get_classic_challenge(
     mapname: &str,
-    moving: &str,
-    panning: &str,
-    zooming: &str,
+    moving: bool,
+    panning: bool,
+    zooming: bool,
     time: i32,
 ) -> Result<String, anyhow::Error> {
     dotenv::dotenv().expect("Failed to load .env file");
     let cookie = env::var("GEOGUESSR_AUTH_TOKEN").expect("Expected geoguessr cookie");
-    let timestr = time.to_string();
 
     let mapid = search_for_map(mapname, &cookie).await?;
 
-    let mut map = HashMap::new();
-    map.insert("forbidMoving", moving);
-    map.insert("forbidRotating", panning);
-    map.insert("forbidZooming", zooming);
-    map.insert("map", &mapid);
-    map.insert("timeLimit", &timestr);
+    let req = json!({ "forbidMoving": moving, "forbidRotating": panning, "forbidZooming": zooming, "map": mapid, "timeLimit": time});
 
     let client = reqwest::Client::new();
     let res = client
         .post("https://www.geoguessr.com/api/v3/challenges")
         .header(reqwest::header::COOKIE, cookie)
-        .json(&map)
+        .json(&req)
         .send()
         .await?;
 
@@ -133,7 +123,7 @@ pub async fn get_battleroyale_lobby() -> Result<String, anyhow::Error> {
 
     Ok(format!(
         "https://www.geoguessr.com/battle-royale/{}",
-        res.json::<CreateBr>().await?.gameLobbyId
+        res.json::<CreateBr>().await?.game_lobby_id
     ))
 }
 
